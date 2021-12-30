@@ -1,12 +1,12 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"os"
 	"strings"
 
+	"github.com/sheodox/telepathy/client"
 	"github.com/sheodox/telepathy/server"
+	"github.com/sheodox/telepathy/utils"
 )
 
 func main() {
@@ -16,20 +16,23 @@ func main() {
 		fmt.Println(err)
 	}
 
+	fmt.Println()
+
 	if telepathyType == "s" {
-		server.Start()
+		err = server.Start()
 	}
 
 	if telepathyType == "c" {
+		err = client.Start()
+	}
 
+	if err != nil {
+		fmt.Println(err)
 	}
 }
 
 func promptTelepathyType() (string, error) {
-	fmt.Print("Do you want to start Telepathy as a file sharing client or server? [c/s]: ")
-
-	reader := bufio.NewReader(os.Stdin)
-	desiredType, err := reader.ReadString('\n')
+	desiredType, err := utils.PromptString("Do you want to start Telepathy as a file sharing client or server? [c/s]")
 
 	if err != nil {
 		return "", err

@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 
@@ -14,6 +15,9 @@ var sharedDirectory string
 func bootServer(dir string) error {
 	sharedDirectory = dir
 	router := gin.Default()
+	router.GET("/", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, "/files")
+	})
 	router.GET("/files", getFiles)
 	router.GET("/files/:fileName", getFileByName)
 
@@ -24,14 +28,15 @@ func bootServer(dir string) error {
 
 func getFiles(c *gin.Context) {
 	var files []string
-	file, err := os.Open(sharedDirectory)
+	f, err := os.Open(sharedDirectory)
+	defer f.Close()
 
 	if err != nil {
 		getFilesError(err, c)
 		return
 	}
 
-	fileList, err := file.ReadDir(-1)
+	fileList, err := f.ReadDir(-1)
 
 	if err != nil {
 		getFilesError(err, c)
@@ -39,7 +44,9 @@ func getFiles(c *gin.Context) {
 	}
 
 	for _, file := range fileList {
-		files = append(files, file.Name())
+		if !file.IsDir() {
+			files = append(files, file.Name())
+		}
 	}
 
 	c.IndentedJSON(http.StatusOK, files)
@@ -51,6 +58,10 @@ func getFilesError(err error, c *gin.Context) {
 }
 
 func getFileByName(c *gin.Context) {
-	fmt.Println(path.Join(sharedDirectory, c.Param("fileName")))
-	c.File(path.Join(sharedDirectory, c.Param("fileName")))
+	fileName, err := url.QueryUnescape(c.Param("fileName"))
+	if err != nil {
+		return
+	}
+
+	c.File(path.Join(sharedDirectory, fileName))
 }

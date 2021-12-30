@@ -1,10 +1,10 @@
 package server
 
 import (
-	"bufio"
-	"fmt"
 	"os"
 	"strings"
+
+	"github.com/sheodox/telepathy/utils"
 )
 
 func Start() error {
@@ -18,7 +18,7 @@ func Start() error {
 }
 
 func promptSharedDirectory() (string, error) {
-	sharedDirectory, err := readString("What directory do you want to share?", "")
+	sharedDirectory, err := utils.PromptString("What directory do you want to share?")
 
 	if err != nil {
 		return "", err
@@ -34,7 +34,7 @@ func promptSharedDirectory() (string, error) {
 		return "", dirExistsErr
 	}
 
-	shouldCreate, err := readString("That directory doesn't exist, create it? [Y/n] ", "y")
+	shouldCreate, err := utils.PromptStringWithFallback("That directory doesn't exist, create it? [Y/n] ", "y")
 	shouldCreate = strings.ToLower(shouldCreate)
 
 	if shouldCreate == "y" {
@@ -49,24 +49,6 @@ func promptSharedDirectory() (string, error) {
 
 	// non-existant directory entered, but user doesn't want to create it, ask again
 	return promptSharedDirectory()
-}
-
-func readString(prompt, fallback string) (string, error) {
-	fmt.Printf("%v ", prompt)
-
-	reader := bufio.NewReader(os.Stdin)
-	response, err := reader.ReadString('\n')
-
-	if err != nil {
-		return "", err
-	}
-	response = strings.TrimSuffix(response, "\n")
-
-	if response == "" {
-		return fallback, nil
-	}
-
-	return response, nil
 }
 
 // exists returns whether the given file or directory exists
